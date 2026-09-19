@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Recipe Nutrition Manager API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Current user session
+  - name: dashboard
+    description: Application overview
+  - name: ingredients
+    description: Ingredient catalog and calorie data
+  - name: recipes
+    description: Recipe management, approvals, notes, and ratings
+  - name: users
+    description: Admin user management
 paths:
   /healthz:
     get:
@@ -24,7 +34,329 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get the current application user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /dashboard:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard totals and recent activity
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /ingredients:
+    get:
+      operationId: listIngredients
+      tags: [ingredients]
+      summary: List ingredients
+      parameters:
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Ingredient list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ingredient"
+    post:
+      operationId: createIngredient
+      tags: [ingredients]
+      summary: Add an ingredient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngredientInput"
+      responses:
+        "201":
+          description: Created ingredient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ingredient"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /ingredients/{ingredientId}:
+    get:
+      operationId: getIngredient
+      tags: [ingredients]
+      summary: Get an ingredient
+      parameters:
+        - $ref: "#/components/parameters/IngredientId"
+      responses:
+        "200":
+          description: Ingredient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ingredient"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateIngredient
+      tags: [ingredients]
+      summary: Update an ingredient
+      parameters:
+        - $ref: "#/components/parameters/IngredientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngredientUpdate"
+      responses:
+        "200":
+          description: Updated ingredient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ingredient"
+    delete:
+      operationId: deleteIngredient
+      tags: [ingredients]
+      summary: Delete an ingredient
+      parameters:
+        - $ref: "#/components/parameters/IngredientId"
+      responses:
+        "204":
+          description: Deleted
+  /recipes:
+    get:
+      operationId: listRecipes
+      tags: [recipes]
+      summary: List visible recipes
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ApprovalStatus"
+        - name: mine
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Recipe list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recipe"
+    post:
+      operationId: createRecipe
+      tags: [recipes]
+      summary: Create a recipe
+      description: Basic users create pending recipes; admins create approved recipes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeInput"
+      responses:
+        "201":
+          description: Created recipe with calculated calories
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+  /recipes/{recipeId}:
+    get:
+      operationId: getRecipe
+      tags: [recipes]
+      summary: Get a recipe
+      parameters:
+        - $ref: "#/components/parameters/RecipeId"
+      responses:
+        "200":
+          description: Recipe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateRecipe
+      tags: [recipes]
+      summary: Update a recipe
+      parameters:
+        - $ref: "#/components/parameters/RecipeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeUpdate"
+      responses:
+        "200":
+          description: Updated recipe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+    delete:
+      operationId: deleteRecipe
+      tags: [recipes]
+      summary: Delete a recipe
+      parameters:
+        - $ref: "#/components/parameters/RecipeId"
+      responses:
+        "204":
+          description: Deleted
+  /recipes/{recipeId}/comments:
+    post:
+      operationId: addRecipeComment
+      tags: [recipes]
+      summary: Record a cooking note
+      parameters:
+        - $ref: "#/components/parameters/RecipeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CookingLogInput"
+      responses:
+        "201":
+          description: Cooking note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CookingLog"
+  /recipes/{recipeId}/rating:
+    put:
+      operationId: rateRecipe
+      tags: [recipes]
+      summary: Rate a recipe
+      parameters:
+        - $ref: "#/components/parameters/RecipeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RatingInput"
+      responses:
+        "200":
+          description: Updated recipe rating
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+  /recipes/{recipeId}/approval:
+    post:
+      operationId: approveRecipe
+      tags: [recipes]
+      summary: Approve or reject a pending recipe
+      parameters:
+        - $ref: "#/components/parameters/RecipeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalInput"
+      responses:
+        "200":
+          description: Moderated recipe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users for admin management
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Add an application user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
 components:
+  parameters:
+    Search:
+      name: search
+      in: query
+      schema:
+        type: string
+      description: Optional case-insensitive search
+    IngredientId:
+      name: ingredientId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    RecipeId:
+      name: recipeId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +365,160 @@ components:
           type: string
       required:
         - status
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    Role:
+      type: string
+      enum: [ADMIN, BASIC]
+    ApprovalStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED]
+    User:
+      type: object
+      required: [id, name, email, role, active, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/Role" }
+        active: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    UserInput:
+      type: object
+      required: [name, email, role]
+      properties:
+        name: { type: string, minLength: 2 }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/Role" }
+    Ingredient:
+      type: object
+      required: [id, name, caloriesPerUnit, unit, alternatives]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        caloriesPerUnit: { type: number, format: double }
+        unit: { type: string }
+        alternatives:
+          type: array
+          items:
+            $ref: "#/components/schemas/IngredientReference"
+    IngredientReference:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+    IngredientInput:
+      type: object
+      required: [name, caloriesPerUnit, unit]
+      properties:
+        name: { type: string, minLength: 1 }
+        caloriesPerUnit: { type: number, format: double, minimum: 0 }
+        unit: { type: string, minLength: 1 }
+        alternativeIds:
+          type: array
+          items: { type: integer, format: int64 }
+    IngredientUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        caloriesPerUnit: { type: number, format: double, minimum: 0 }
+        unit: { type: string, minLength: 1 }
+        alternativeIds:
+          type: array
+          items: { type: integer, format: int64 }
+    RecipeIngredientInput:
+      type: object
+      required: [ingredientId, quantity]
+      properties:
+        ingredientId: { type: integer, format: int64 }
+        quantity: { type: number, format: double, minimum: 0.01 }
+    RecipeIngredient:
+      allOf:
+        - $ref: "#/components/schemas/RecipeIngredientInput"
+        - type: object
+          required: [ingredientName, unit, calories]
+          properties:
+            ingredientName: { type: string }
+            unit: { type: string }
+            calories: { type: number, format: double }
+    Recipe:
+      type: object
+      required: [id, name, ingredients, totalCalories, status, author, comments, averageRating, ratingCount, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        imageUrl: { type: ["string", "null"], format: uri }
+        ingredients:
+          type: array
+          items: { $ref: "#/components/schemas/RecipeIngredient" }
+        totalCalories: { type: number, format: double }
+        status: { $ref: "#/components/schemas/ApprovalStatus" }
+        author: { $ref: "#/components/schemas/User" }
+        comments:
+          type: array
+          items: { $ref: "#/components/schemas/CookingLog" }
+        averageRating: { type: number, format: double }
+        ratingCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+    RecipeInput:
+      type: object
+      required: [name, ingredients]
+      properties:
+        name: { type: string, minLength: 1 }
+        imageUrl: { type: ["string", "null"], format: uri }
+        ingredients:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/RecipeIngredientInput" }
+    RecipeUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        imageUrl: { type: ["string", "null"], format: uri }
+        ingredients:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/RecipeIngredientInput" }
+    CookingLog:
+      type: object
+      required: [id, user, note, cookedAt]
+      properties:
+        id: { type: integer, format: int64 }
+        user: { $ref: "#/components/schemas/User" }
+        note: { type: string }
+        cookedAt: { type: string, format: date-time }
+    CookingLogInput:
+      type: object
+      required: [note]
+      properties:
+        note: { type: string, minLength: 1 }
+        cookedAt: { type: ["string", "null"], format: date-time }
+    RatingInput:
+      type: object
+      required: [rating]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+    ApprovalInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [APPROVED, REJECTED]
+    DashboardSummary:
+      type: object
+      required: [recipeCount, ingredientCount, pendingApprovalCount, averageRating, recentRecipes]
+      properties:
+        recipeCount: { type: integer }
+        ingredientCount: { type: integer }
+        pendingApprovalCount: { type: integer }
+        averageRating: { type: number, format: double }
+        recentRecipes:
+          type: array
+          items: { $ref: "#/components/schemas/Recipe" }
 

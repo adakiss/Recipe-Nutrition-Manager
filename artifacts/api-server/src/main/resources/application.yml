@@ -1,0 +1,23 @@
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: recipe-nutrition-api
+  datasource:
+    url: ${JDBC_DATABASE_URL:jdbc:h2:file:./data/recipe-nutrition;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE}
+    username: ${PGUSER:sa}
+    password: ${PGPASSWORD:}
+    driver-class-name: ${JDBC_DATABASE_DRIVER:org.h2.Driver}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  jackson:
+    default-property-inclusion: non_null
+
+springdoc:
+  api-docs:
+    path: /openapi
+  swagger-ui:
+    path: /swagger-ui.html
