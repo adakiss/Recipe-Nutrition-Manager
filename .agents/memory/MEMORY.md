@@ -1,0 +1,1 @@
+- [Angular JIT under Vite](angular-jit-vite.md) — Vite needs legacy decorator lowering and compiler-first bootstrap; async API state may need explicit rendering.

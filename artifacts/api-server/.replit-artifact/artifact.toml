@@ -10,7 +10,7 @@ name = "API Server"
 paths = ["/api"]
 
 [services.development]
-run = "mvn -q spring-boot:run"
+run = "mvn -q spring-boot:run -Dspring-boot.run.profiles=local-h2"
 
 [services.production]
 

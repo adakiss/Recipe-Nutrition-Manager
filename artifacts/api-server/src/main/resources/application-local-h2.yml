@@ -1,0 +1,5 @@
+spring:
+  liquibase:
+    # The checked-in local H2 database is already migrated. This profile is only
+    # enabled by the development workflow; production keeps migrations enabled.
+    enabled: false

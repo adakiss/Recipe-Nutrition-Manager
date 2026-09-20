@@ -1,5 +1,4 @@
 import path from 'path';
-import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
@@ -30,7 +29,6 @@ if (!basePath) {
 export default defineConfig({
   base: basePath,
   plugins: [
-    react(),
     tailwindcss(),
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== 'production' &&
@@ -57,7 +55,6 @@ export default defineConfig({
         'attached_assets',
       ),
     },
-    dedupe: ['react', 'react-dom'],
   },
   root: path.resolve(import.meta.dirname),
   build: {
