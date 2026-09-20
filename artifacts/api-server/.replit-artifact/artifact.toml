@@ -10,15 +10,15 @@ name = "API Server"
 paths = ["/api"]
 
 [services.development]
-run = "mvn -q -f artifacts/api-server/pom.xml spring-boot:run"
+run = "mvn -q spring-boot:run"
 
 [services.production]
 
 [services.production.build]
-args = ["mvn", "-q", "-f", "artifacts/api-server/pom.xml", "-DskipTests", "package"]
+args = ["mvn", "-q", "-DskipTests", "package"]
 
 [services.production.run]
-args = ["java", "-jar", "artifacts/api-server/target/recipe-nutrition-api-0.1.0.jar"]
+args = ["java", "-jar", "target/recipe-nutrition-api-0.1.0.jar"]
 
 [services.production.run.env]
 PORT = "8080"
